@@ -229,7 +229,8 @@ If you'd like to improve the project:
 ```markdown
 ![Homepage](./screenshots/home.png)
 ```
-<img width="829" height="1600" alt="image" src="https://github.com/user-attachments/assets/4ef0baf7-a6bd-4999-a6c1-bcfc64bf1be5" />
+<img width="720" height="1600" alt="image" src="https://github.com/user-attachments/assets/e9efbd75-5fa2-48cb-ab33-7aedf4d9b57b" />
+
 
 ---
 
