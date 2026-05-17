@@ -201,7 +201,7 @@ Click **Deploy Web Service** and Render will generate a live deployment link.
 
 # 🔗 Project Links
 
-- 💻 GitHub Repository: https://github.com/YOUR_USERNAME/resqnet-website
+- 💻 GitHub Repository: https://github.com/Yash130606/resqnetpro-website
 - 🌐 Live Website: https://resqnet-website-1.onrender.com/
 
 ---
@@ -223,13 +223,13 @@ If you'd like to improve the project:
 
 # 📸 Screenshots
 
-Add screenshots of your project here.
+<img width="829" height="1600" alt="image" src="https://github.com/user-attachments/assets/17bcbd7b-d698-4802-8aa4-8c9cb5e4cd08" />
 
-Example:
 
 ```markdown
 ![Homepage](./screenshots/home.png)
 ```
+<img width="829" height="1600" alt="image" src="https://github.com/user-attachments/assets/4ef0baf7-a6bd-4999-a6c1-bcfc64bf1be5" />
 
 ---
 
@@ -247,7 +247,7 @@ Example:
 
 Developed by **Yashu**
 
-GitHub: https://github.com/YOUR_USERNAME
+https://github.com/Yash130606/resqnetpro-website
 
 ---
 
