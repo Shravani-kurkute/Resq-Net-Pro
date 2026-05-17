@@ -1,0 +1,17 @@
+# Dependencies
+backend/node_modules/
+
+# Environment secrets — NEVER commit these
+backend/.env
+frontend/.env
+
+# Firebase private key — NEVER commit this
+backend/config/firebase-key.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*

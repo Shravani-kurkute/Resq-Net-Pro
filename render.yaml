@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: resqnet
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: FIREBASE_PROJECT_ID
+        value: resqnet-a972d
+      # Add EMAIL_USER and EMAIL_PASS in Render dashboard (secret)

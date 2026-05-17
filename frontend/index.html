@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ResQNet — Real-Time Disaster Coordination</title>
+    <meta name="description"
+        content="ResQNet connects citizens, volunteers, NGOs and authorities in real-time during disasters." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <!-- Leaflet.js for live maps (NO API KEY NEEDED — OpenStreetMap is free) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style2.css">
+    <!-- Firebase Web SDK (compat — no build tools needed) -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+</head>
+
+<body>
+
+    <!-- LIVE ALERT BAR (shown when critical broadcast exists) -->
+    <div id="live-broadcast-bar">🚨 LIVE ALERT: Loading...</div>
+
+    <!-- SOS BAR -->
+    <div class="sos-bar">
+        <p>🚨 Emergency? Send SOS directly from this website — no app or login needed.</p>
+        <button class="btn" onclick="showPage('sos')">Send SOS Now →</button>
+    </div>
+
+    <!-- NAVBAR -->
+    <nav>
+        <a class="nav-logo" onclick="showPage('splash')" style="cursor:pointer;text-decoration:none">
+            <div class="nav-logo-icon">🆘</div>
+            <span class="nav-logo-text">RESQNET</span>
+        </a>
+        <ul class="nav-links">
+            <li><a onclick="showPage('home')">Home</a></li>
+            <li><a onclick="scrollToSection('features')">Features</a></li>
+            <li><a onclick="scrollToSection('how')">How It Works</a></li>
+            <li><a onclick="showPage('about')">About</a></li>
+            <li><a onclick="showPage('contact')">Contact</a></li>
+            <li class="nav-dropdown" id="nav-dash-dropdown">
+                <button class="nav-dropdown-btn" onclick="toggleDashDropdown(event)">Dashboards ▾</button>
+                <div class="nav-dropdown-menu" id="dash-menu">
+                    <div class="nav-dropdown-item" onclick="navGoTo('citizen')">👤 Citizen</div>
+                    <div class="nav-dropdown-item" onclick="navGoTo('volunteer')">🦺 Volunteer</div>
+                    <div class="nav-dropdown-item" onclick="navGoTo('ngo')">🏢 NGO</div>
+                    <div class="nav-dropdown-item" onclick="navGoTo('admin')">⚡ Admin</div>
+                    <div style="height:1px;background:var(--border);margin:4px 0"></div>
+                    <div class="nav-dropdown-item" onclick="simulateDisaster();closeDashDropdown()"
+                        style="color:#4CAF50;font-weight:700">🎮 Simulate Disaster</div>
+                </div>
+            </li>
+        </ul>
+        <div class="nav-cta">
+            <div id="nav-user"><button class="btn btn-ghost btn-sm" onclick="showPage('login')">Login</button></div>
+            <button class="btn btn-red" onclick="showPage('sos')">🆘 SOS</button>
+        </div>
+        <div class="hamburger" onclick="toggleMenu()"><span></span><span></span><span></span></div>
+    </nav>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+        <a onclick="showPage('home');toggleMenu()">HOME</a>
+        <a onclick="scrollToSection('features');toggleMenu()">FEATURES</a>
+        <a onclick="showPage('about');toggleMenu()">ABOUT</a>
+        <a onclick="showPage('download');toggleMenu()">DOWNLOAD</a>
+        <a onclick="showPage('contact');toggleMenu()">CONTACT</a>
+        <a onclick="showPage('citizen');toggleMenu()">👤 CITIZEN</a>
+        <a onclick="showPage('volunteer');toggleMenu()">🦺 VOLUNTEER</a>
+        <a onclick="showPage('ngo');toggleMenu()">🏢 NGO</a>
+        <a onclick="showPage('admin');toggleMenu()">⚡ ADMIN</a>
+        <a onclick="showPage('login');toggleMenu()">🔐 LOGIN</a>
+        <a onclick="showPage('sos');toggleMenu()" style="color:var(--red)">🆘 SEND SOS</a>
+    </div>
+
+    <!-- ════════════════════════════════
+     PAGE: SPLASH / INTRO
+════════════════════════════════ -->
+    <div class="page active" id="page-splash">
+        <div class="splash-bg"></div>
+        <div class="splash-overlay"></div>
+        <div class="splash-content">
+            <div class="splash-logo-icon">🆘</div>
+            <div class="splash-title">RESQ<span>NET</span></div>
+            <p class="splash-tagline">When every second counts, India needs a smarter response.</p>
+
+            <div class="splash-incidents">
+                <!-- Kerala Floods 2018 -->
+                <div class="splash-card" onclick="showPage('home')">
+                    <div class="splash-card-year">AUGUST 2018</div>
+                    <span class="splash-card-icon">🌊</span>
+                    <div class="splash-card-title">KERALA FLOODS</div>
+                    <p class="splash-card-desc">The worst floods in a century. 14 districts submerged. Rescue
+                        coordination broke down. Over 5.4 million displaced with no unified communication platform.</p>
+                    <div class="splash-card-stats">
+                        <div><span class="splash-stat-num">5.4M</span><span class="splash-stat-lbl">Displaced</span>
+                        </div>
+                        <div><span class="splash-stat-num">483</span><span class="splash-stat-lbl">Lives Lost</span>
+                        </div>
+                        <div><span class="splash-stat-num">14</span><span class="splash-stat-lbl">Districts</span></div>
+                    </div>
+                </div>
+                <!-- Odisha Cyclone Fani 2019 -->
+                <div class="splash-card" onclick="showPage('home')">
+                    <div class="splash-card-year">MAY 2019</div>
+                    <span class="splash-card-icon">🌀</span>
+                    <div class="splash-card-title">CYCLONE FANI</div>
+                    <p class="splash-card-desc">One of the strongest cyclones in 20 years. 10,000+ villages affected.
+                        Despite advance warning, last-mile evacuation coordination remained chaotic and fragmented.</p>
+                    <div class="splash-card-stats">
+                        <div><span class="splash-stat-num">1.2M</span><span class="splash-stat-lbl">Evacuated</span>
+                        </div>
+                        <div><span class="splash-stat-num">89</span><span class="splash-stat-lbl">Lives Lost</span>
+                        </div>
+                        <div><span class="splash-stat-num">10K+</span><span class="splash-stat-lbl">Villages Hit</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Chamoli Disaster 2021 -->
+                <div class="splash-card" onclick="showPage('home')">
+                    <div class="splash-card-year">FEBRUARY 2021</div>
+                    <span class="splash-card-icon">🏔️</span>
+                    <div class="splash-card-title">CHAMOLI FLASH FLOOD</div>
+                    <p class="splash-card-desc">A glacier burst triggered a massive flash flood in Uttarakhand. 204
+                        missing. Rescuers couldn't coordinate in real-time — critical hours were lost without the right
+                        tools.</p>
+                    <div class="splash-card-stats">
+                        <div><span class="splash-stat-num">204</span><span class="splash-stat-lbl">Missing</span></div>
+                        <div><span class="splash-stat-num">72</span><span class="splash-stat-lbl">Confirmed Dead</span>
+                        </div>
+                        <div><span class="splash-stat-num">2</span><span class="splash-stat-lbl">Dams Destroyed</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <p class="splash-cta" style="color:var(--grey);margin-bottom:20px">ResQNet was built so this never happens
+                again. Click any card or enter the platform.</p>
+            <button class="btn btn-red splash-enter-btn" onclick="showPage('home')">ENTER RESQNET →</button>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════
+     PAGE: LOGIN / REGISTER
+════════════════════════════════ -->
+    <div class="page" id="page-login">
+        <div class="auth-page-wrap">
+            <div class="auth-box">
+                <div style="text-align:center;margin-bottom:24px">
+                    <div
+                        style="width:56px;height:56px;background:var(--red);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 12px">
+                        🆘</div>
+                    <div class="auth-title">RESQNET</div>
+                    <p class="auth-subtitle">Login or register to access your dashboard</p>
+                </div>
+                <div class="auth-tab-bar">
+                    <button class="auth-tab-btn active" data-tab="login" onclick="switchAuthTab('login')">Login</button>
+                    <button class="auth-tab-btn" data-tab="register"
+                        onclick="switchAuthTab('register')">Register</button>
+                </div>
+
+                <!-- Login Tab -->
+                <div class="auth-tab-panel active" id="auth-tab-login">
+                    <div class="form-group"><label>Email</label><input type="email" id="auth-email"
+                            placeholder="you@example.com"></div>
+                    <div class="form-group"><label>Password</label><input type="password" id="auth-pass"
+                            placeholder="••••••••"></div>
+                    <div class="form-group"><label>Your Role</label>
+                        <select id="auth-role">
+                            <option value="">Select your role...</option>
+                            <option value="citizen">👤 Citizen</option>
+                            <option value="volunteer">🦺 Volunteer</option>
+                            <option value="ngo">🏢 NGO</option>
+                            <option value="admin">⚡ Admin</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-red"
+                        style="width:100%;justify-content:center;padding:14px;font-size:15px;margin-bottom:16px"
+                        onclick="handleAuthLogin()">Login →</button>
+                    <div class="auth-divider">OR USE DEMO ACCOUNTS FOR JUDGES</div>
+                    <div class="demo-btns">
+                        <button class="demo-btn" onclick="loginAs('citizen')">👤 Citizen Demo</button>
+                        <button class="demo-btn" onclick="loginAs('volunteer')">🦺 Volunteer Demo</button>
+                        <button class="demo-btn" onclick="loginAs('ngo')">🏢 NGO Demo</button>
+                        <button class="demo-btn" onclick="loginAs('admin')">⚡ Admin Demo</button>
+                    </div>
+                    <p style="text-align:center;font-size:12px;color:var(--grey2);margin-top:16px">No account? <a
+                            onclick="switchAuthTab('register')" style="color:var(--red);cursor:pointer">Register
+                            here</a></p>
+                </div>
+
+                <!-- Register Tab -->
+                <div class="auth-tab-panel" id="auth-tab-register">
+                    <div class="form-group"><label>Full Name</label><input type="text" id="reg-name"
+                            placeholder="Rahul Sharma"></div>
+                    <div class="form-group"><label>Email</label><input type="email" id="reg-email"
+                            placeholder="you@example.com"></div>
+                    <div class="form-group"><label>Password (min 6 chars)</label><input type="password" id="reg-pass"
+                            placeholder="Create password"></div>
+                    <div class="form-group"><label>Register as</label>
+                        <select id="reg-role">
+                            <option value="">Select your role...</option>
+                            <option value="citizen">👤 Citizen — Track emergencies, send SOS</option>
+                            <option value="volunteer">🦺 Volunteer — Accept and complete field tasks</option>
+                            <option value="ngo">🏢 NGO — Manage resources, dispatch supplies</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-red" style="width:100%;justify-content:center;padding:14px;font-size:15px"
+                        onclick="handleRegister()">Create Account →</button>
+                    <p style="text-align:center;font-size:12px;color:var(--grey2);margin-top:16px">Admin accounts are
+                        created by existing admins only.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════
+     PAGE: HOME
+════════════════════════════════ -->
+    <div class="page" id="page-home">
+        <section class="hero">
+            <div class="hero-badge"><span class="live-dot"></span> Real-Time Disaster Coordination Platform</div>
+            <h1>WHEN EVERY<br><span>SECOND</span><br>COUNTS</h1>
+            <p class="hero-sub">ResQNet connects citizens, volunteers, NGOs and authorities in real-time during
+                disasters. One tap — help on the way.</p>
+            <div class="hero-btns">
+                <button class="btn btn-red" style="font-size:16px;padding:14px 32px" onclick="showPage('sos')">🆘 Send
+                    SOS Now</button>
+                <button class="btn btn-ghost" style="font-size:16px;padding:14px 32px"
+                    onclick="scrollToSection('how')">How It Works →</button>
+            </div>
+            <div class="hero-stats">
+                <div class="hero-stat">
+                    <div class="hero-stat-num" id="stat-volunteers"><span>1,240</span></div>
+                    <div class="hero-stat-label">Active Responders</div>
+                </div>
+                <div class="hero-stat">
+                    <div class="hero-stat-num">35<span style="color:var(--red)">%</span></div>
+                    <div class="hero-stat-label">Faster Response</div>
+                </div>
+                <div class="hero-stat">
+                    <div class="hero-stat-num" id="stat-incidents"><span>3,200</span></div>
+                    <div class="hero-stat-label">Incidents Handled</div>
+                </div>
+                <div class="hero-stat">
+                    <div class="hero-stat-num">24<span style="color:var(--red)">/7</span></div>
+                    <div class="hero-stat-label">Live Monitoring</div>
+                </div>
+            </div>
+        </section>
+
+        <div class="divider"></div>
+
+        <section id="features">
+            <div class="section-header center fade-up">
+                <div class="section-label">Core Features</div>
+                <div class="section-title">EVERYTHING YOU NEED<br>IN A CRISIS</div>
+                <p class="section-desc">Built for speed. Designed for panic. Every feature works with one hand, even
+                    offline.</p>
+            </div>
+            <div class="features-grid fade-up">
+                <div class="feature-card">
+                    <div class="feature-icon">🆘</div>
+                    <h3>Anonymous SOS</h3>
+                    <p>No login needed. Select emergency type, allow GPS, press send. Help dispatched in under 60
+                        seconds.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🗺️</div>
+                    <h3>Live Disaster Map</h3>
+                    <p>Leaflet.js map showing real-time incident pins. Color-coded by disaster type. Works without API
+                        keys.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📢</div>
+                    <h3>Emergency Broadcasts</h3>
+                    <p>Admin pushes alerts to all dashboards instantly. Critical alerts appear as a banner on every
+                        page.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔐</div>
+                    <h3>Role-Based Dashboards</h3>
+                    <p>Citizen, Volunteer, NGO, Admin — each with a tailored view. Demo login available for judges.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🤖</div>
+                    <h3>AI Emergency Chatbot</h3>
+                    <p>Floating AI assistant provides step-by-step guidance for any disaster type, 24/7, in real-time.
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📦</div>
+                    <h3>NGO Resource Management</h3>
+                    <p>Track inventory — food, water, medical kits. Dispatch with one click. Full history and low-stock
+                        alerts.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">✅</div>
+                    <h3>Mark Yourself Safe</h3>
+                    <p>Citizens tap once to broadcast safety. Family and rescue teams see it instantly across all
+                        dashboards.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Admin Analytics</h3>
+                    <p>Live charts by disaster type, status breakdown, response time metrics. Real data from Firestore.
+                    </p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔒</div>
+                    <h3>Tamper-Proof Audit Log</h3>
+                    <p>Every admin action persisted with timestamp. Full accountability. Syncs with Firestore when
+                        connected.</p>
+                </div>
+            </div>
+        </section>
+
+        <div class="divider"></div>
+
+        <section id="how">
+            <div class="section-header fade-up">
+                <div class="section-label">The Process</div>
+                <div class="section-title">HOW RESQNET<br>SAVES LIVES</div>
+            </div>
+            <div class="steps">
+                <div class="step fade-up">
+                    <div class="step-num">01</div>
+                    <h3>Citizen Sends SOS</h3>
+                    <p>No login required. Select emergency type, GPS auto-fills location. Done in 10 seconds. Works on
+                        any device.</p>
+                </div>
+                <div class="step fade-up">
+                    <div class="step-num">02</div>
+                    <h3>Instant Notification</h3>
+                    <p>All Admins and Volunteers see the new case immediately via Firestore. SMS sent to the victim's
+                        number.</p>
+                </div>
+                <div class="step fade-up">
+                    <div class="step-num">03</div>
+                    <h3>Admin Assigns</h3>
+                    <p>Admin command center shows case as Pending. One click assigns nearest available volunteer team.
+                    </p>
+                </div>
+                <div class="step fade-up">
+                    <div class="step-num">04</div>
+                    <h3>NGO Dispatches</h3>
+                    <p>NGO dashboard shows resource need by emergency type. Dispatch food, water, medical kits in one
+                        click.</p>
+                </div>
+                <div class="step fade-up">
+                    <div class="step-num">05</div>
+                    <h3>Volunteer Responds</h3>
+                    <p>Accepts → En Route → Completed. Citizen sees real-time progress on their dashboard with a live
+                        tracker.</p>
+                </div>
+                <div class="step fade-up">
+                    <div class="step-num">06</div>
+                    <h3>Resolved &amp; Logged</h3>
+                    <p>Case marked resolved. Full audit trail in Admin panel. Analytics updated. Inventory restocked by
+                        NGO.</p>
+                </div>
+            </div>
+        </section>
+
+        <div class="divider"></div>
+
+        <section>
+            <div class="section-header center fade-up">
+                <div class="section-label">Built for Everyone</div>
+                <div class="section-title">FOUR ROLES.<br>ONE MISSION.</div>
+            </div>
+            <div class="roles-grid">
+                <div class="role-card fade-up" style="--accent:rgba(211,47,47,0.5)" onclick="showPage('citizen')"><span
+                        class="role-emoji">👤</span>
+                    <h3>Citizen</h3>
+                    <p>Send SOS without login. Track rescue status live. Mark yourself safe. See emergency broadcasts.
+                    </p><span class="role-tag" style="background:rgba(211,47,47,0.15);color:#ef5350">VICTIM /
+                        SURVIVOR</span>
+                </div>
+                <div class="role-card fade-up" style="--accent:rgba(156,39,176,0.5)" onclick="showPage('volunteer')">
+                    <span class="role-emoji">🦺</span>
+                    <h3>Volunteer</h3>
+                    <p>See assigned tasks. Accept, mark En Route, complete. Toggle Free/Busy status. View on live map.
+                    </p><span class="role-tag" style="background:rgba(156,39,176,0.15);color:#ce93d8">FIRST
+                        RESPONDER</span>
+                </div>
+                <div class="role-card fade-up" style="--accent:rgba(33,150,243,0.5)" onclick="showPage('ngo')"><span
+                        class="role-emoji">🏢</span>
+                    <h3>NGO</h3>
+                    <p>Manage food, water, medical inventory. Smart dispatch by disaster type. Full history. Low-stock
+                        alerts.</p><span class="role-tag"
+                        style="background:rgba(33,150,243,0.15);color:#90caf9">RESOURCE MANAGER</span>
+                </div>
+                <div class="role-card fade-up" style="--accent:rgba(255,152,0,0.5)" onclick="showPage('admin')"><span
+                        class="role-emoji">⚡</span>
+                    <h3>Admin</h3>
+                    <p>6-tab command center: Pending SOS, All Cases, Map, Broadcast, Analytics, Audit Log.</p><span
+                        class="role-tag" style="background:rgba(255,152,0,0.15);color:#ffcc02">COMMAND CENTER</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="cta-section">
+            <div class="section-label">Ready to Deploy</div>
+            <div class="section-title">DOWNLOAD RESQNET<br>PROTECT YOUR COMMUNITY</div>
+            <p class="section-desc" style="margin:16px auto 40px">Free for citizens. Free for volunteers. Built for
+                India's disaster response ecosystem.</p>
+            <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap">
+                <button class="btn btn-red" style="font-size:16px;padding:16px 36px" onclick="showPage('download')">📱
+                    Download App</button>
+                <button class="btn btn-ghost" style="font-size:16px;padding:16px 36px" onclick="showPage('login')">🔐
+                    Login / Register</button>
+            </div>
+        </section>
+    </div>
+
+    <!-- ════════════════════════════════
+     PAGE: SOS FORM
+════════════════════════════════ -->
+    <div class="page" id="page-sos">
+        <div class="sos-page">
+            <div class="sos-hero">
+                <div class="hero-badge"><span class="live-dot"></span> No Login Required</div>
+                <h1
+                    style="font-family:var(--font-head);font-size:clamp(48px,8vw,90px);color:var(--white);line-height:1;margin-bottom:16px">
+                    SEND <span style="color:var(--red)">SOS</span></h1>
+                <p style="color:var(--grey);font-size:18px;max-width:500px;margin:0 auto">Fill this form — help is
+                    dispatched in under 60 seconds. No login needed. Your data is confidential.</p>
+            </div>
+            <div class="sos-form-box">
+                <div class="form-group">
+                    <label>Emergency Type *</label>
+                    <div class="sos-type-grid">
+                        <div class="sos-type-btn" data-type="Flood" onclick="selectSosType('Flood')"><span
+                                class="type-icon">🌊</span><span class="type-label">Flood</span></div>
+                        <div class="sos-type-btn" data-type="Fire" onclick="selectSosType('Fire')"><span
+                                class="type-icon">🔥</span><span class="type-label">Fire</span></div>
+                        <div class="sos-type-btn" data-type="Medical" onclick="selectSosType('Medical')"><span
+                                class="type-icon">🏥</span><span class="type-label">Medical</span></div>
+                        <div class="sos-type-btn" data-type="Cyclone" onclick="selectSosType('Cyclone')"><span
+                                class="type-icon">🌀</span><span class="type-label">Cyclone</span></div>
+                        <div class="sos-type-btn" data-type="Earthquake" onclick="selectSosType('Earthquake')"><span
+                                class="type-icon">🌍</span><span class="type-label">Earthquake</span></div>
+                        <div class="sos-type-btn" data-type="Other" onclick="selectSosType('Other')"><span
+                                class="type-icon">🆘</span><span class="type-label">Other</span></div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Your Location *</label>
+                    <button class="location-btn" id="sos-loc-btn" onclick="getLocation()">📍 Auto-detect My GPS
+                        Location</button>
+                    <input type="text" id="sos-location" placeholder="Or type: Street, Area, City, Landmark...">
+                </div>
+                <div class="form-group"><label>What's happening? (Optional)</label><textarea id="sos-details"
+                        placeholder="Describe the emergency — number of people, injuries, immediate danger..."></textarea>
+                </div>
+                <div class="form-group"><label>Your Contact Number (Optional — for SMS confirmation)</label><input
+                        type="tel" id="sos-contact" placeholder="+91 XXXXX XXXXX"></div>
+                <button class="btn btn-red sos-submit-btn" id="sos-submit" onclick="handleSosSubmit()">🆘 SEND SOS — GET
+                    HELP NOW</button>
+                <p style="text-align:center;color:var(--grey2);font-size:12px;margin-top:12px">By submitting you confirm
+                    this is a real emergency. Misuse is a criminal offence.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════
+     PAGE: CITIZEN DASHBOARD
+════════════════════════════════ -->
+    <div class="page" id="page-citizen">
+        <div class="dash-page">
+            <div class="dash-header">
+                <div class="dash-header-top">
+                    <div>
+                        <div class="dash-title">👤 CITIZEN DASHBOARD</div>
+                        <div class="dash-subtitle">Track your SOS, stay safe, stay informed</div>
+                    </div>
+                    <div style="display:flex;gap:12px;flex-wrap:wrap">
+                        <button class="btn btn-red" onclick="showPage('sos')">🆘 New SOS</button>
+                        <button class="btn btn-ghost" id="mark-safe-btn" onclick="markSafe()">🟢 Mark Yourself
+                            Safe</button>
+                    </div>
+                </div>
+            </div>
+            <div class="dash-body">
+                <!-- Safe Status -->
+                <div id="safe-status-display"></div>
+
+                <!-- SOS Tracker -->
+                <div class="panel" style="margin-bottom:24px">
+                    <div class="panel-header">
+                        <div class="panel-title">🆘 Your Active SOS</div>
+                        <div id="cs-status"></div>
+                    </div>
+                    <div class="panel-body" id="citizen-sos-panel">
+                        <div
+                            style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px;margin-bottom:24px">
+                            <div>
+                                <div
+                                    style="font-size:11px;color:var(--grey);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">
+                                    Emergency Type</div>
+                                <div id="cs-type" style="font-weight:700;color:var(--white);font-size:18px">—</div>
+                            </div>
+                            <div>
+                                <div
+                                    style="font-size:11px;color:var(--grey);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">
+                                    Location</div>
+                                <div id="cs-loc" style="font-weight:700;color:var(--white)">—</div>
+                            </div>
+                            <div>
+                                <div
+                                    style="font-size:11px;color:var(--grey);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">
+                                    Sent</div>
+                                <div id="cs-time" style="font-weight:700;color:var(--white)">—</div>
+                            </div>
+                            <div>
+                                <div
+                                    style="font-size:11px;color:var(--grey);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">
+                                    Assigned To</div>
+                                <div id="cs-assigned" style="font-weight:700;color:var(--white)">—</div>
+                            </div>
+                        </div>
+                        <div class="progress-track">
+                            <div class="progress-step" id="track-0">
+                                <div class="progress-step-dot">📡</div>
+                                <div class="progress-step-label">Received</div>
+                            </div>
+                            <div class="progress-step" id="track-1">
+                                <div class="progress-step-dot">⚡</div>
+                                <div class="progress-step-label">Assigned</div>
+                            </div>
+                            <div class="progress-step" id="track-2">
+                                <div class="progress-step-dot">🚗</div>
+                                <div class="progress-step-label">En Route</div>
+                            </div>
+                            <div class="progress-step" id="track-3">
+                                <div class="progress-step-dot">✅</div>
+                                <div class="progress-step-label">Resolved</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div class="panel-title">📢 Emergency Broadcasts</div><button class="btn btn-ghost btn-sm"
+                                onclick="refreshBroadcasts('citizen-broadcast-list')">Refresh</button>
+                        </div>
+                        <div class="panel-body" id="citizen-broadcast-list">
+                            <div class="empty-state">
+                                <div class="spinner"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div class="panel-title">📋 Recent Resolved Cases</div>
+                        </div>
+                        <div class="panel-body no-pad" id="recent-cases-list">
+                            <div class="empty-state">
+                                <div class="spinner"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Map -->
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">🗺️ Live Disaster Map</div><span class="badge badge-active">Live —
+                            OpenStreetMap</span>
+                    </div>
+                    <div class="panel-body">
+                        <div id="citizen-map" class="leaflet-map"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════
+     PAGE: VOLUNTEER DASHBOARD
+════════════════════════════════ -->
+    <div class="page" id="page-volunteer">
+        <div class="dash-page">
+            <div class="dash-header">
+                <div class="dash-header-top">
+                    <div>
+                        <div class="dash-title">🦺 VOLUNTEER DASHBOARD</div>
+                        <div class="dash-subtitle" style="display:flex;align-items:center;gap:10px">Accept tasks, save
+                            lives <span id="vol-status-label"><span class="badge badge-resolved">Free</span></span>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+                        <div class="status-toggle">
+                            <button class="status-toggle-btn active-free" data-status="Free"
+                                onclick="toggleVolunteerStatus('Free')">🟢 Free</button>
+                            <button class="status-toggle-btn" data-status="Busy"
+                                onclick="toggleVolunteerStatus('Busy')">🟠 Busy</button>
+                        </div>
+                        <button class="btn btn-ghost" onclick="loadVolunteerDash()">⟳ Refresh</button>
+                    </div>
+                </div>
+            </div>
+            <div class="dash-body">
+                <div class="stat-cards">
+                    <div class="stat-card">
+                        <div class="stat-card-icon">⚡</div>
+                        <div class="stat-card-num" style="color:var(--blue)" id="vol-stat-active">—</div>
+                        <div class="stat-card-label">Active Tasks</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-icon">⏳</div>
+                        <div class="stat-card-num" style="color:var(--orange)" id="vol-stat-pending">—</div>
+                        <div class="stat-card-label">Pending</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-icon">✅</div>
+                        <div class="stat-card-num" style="color:var(--green)" id="vol-stat-resolved">—</div>
+                        <div class="stat-card-label">Resolved</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-icon">⭐</div>
+                        <div class="stat-card-num" style="color:#FFD700">4.9</div>
+                        <div class="stat-card-label">Rating</div>
+                    </div>
+                </div>
+
+                <div class="panel" style="margin-bottom:24px">
+                    <div class="panel-header">
+                        <div class="panel-title">📋 My Assigned Tasks</div><button class="btn btn-ghost btn-sm"
+                            onclick="loadVolunteerDash()">⟳ Refresh</button>
+                    </div>
+                    <div class="panel-body no-pad" id="vol-tasks">
+                        <div class="empty-state">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div class="panel-title">📢 Active Broadcasts</div>
+                        </div>
+                        <div class="panel-body" id="vol-broadcast-list">
+                            <div class="empty-state">
+                                <div class="spinner"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div class="panel-title">🗺️ Field Map</div><span class="badge badge-active">Live</span>
+                        </div>
+                        <div class="panel-body" style="padding:0">
+                            <div id="vol-map" class="leaflet-map"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════
+     PAGE: NGO DASHBOARD
+════════════════════════════════ -->
+    <div class="page" id="page-ngo">
+        <div class="dash-page">
+            <div class="dash-header">
+                <div class="dash-header-top">
+                    <div>
+                        <div class="dash-title">🏢 NGO DASHBOARD</div>
+                        <div class="dash-subtitle">Inventory management and resource dispatch</div>
+                    </div>
+                    <div style="display:flex;gap:12px"><button class="btn btn-ghost" onclick="loadNgoDash()">⟳
+                            Refresh</button></div>
+                </div>
+            </div>
+            <div class="dash-body">
+                <div class="stat-cards">
+                    <div class="stat-card">
+                        <div class="stat-card-icon">📦</div>
+                        <div class="stat-card-num" style="color:var(--blue)" id="ngo-stat-total">—</div>
+                        <div class="stat-card-label">Total Stock</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-icon">🚚</div>
+                        <div class="stat-card-num" style="color:var(--orange)" id="ngo-stat-disp">—</div>
+                        <div class="stat-card-label">Total Dispatched</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-icon">⚠️</div>
+                        <div class="stat-card-num" style="color:var(--red)" id="ngo-stat-low">—</div>
+                        <div class="stat-card-label">Low Stock Items</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-icon">🔄</div>
+                        <div class="stat-card-num" style="color:var(--green)" id="ngo-stat-active">—</div>
+                        <div class="stat-card-label">In Transit</div>
+                    </div>
+                </div>
+
+                <div class="panel" style="margin-bottom:24px">
+                    <div class="panel-header">
+                        <div class="panel-title">📦 Resource Inventory</div>
+                        <span style="font-size:13px;color:var(--grey)">Click Dispatch or Restock to update in
+                            real-time</span>
+                    </div>
+                    <div class="panel-body">
+                        <div class="inventory-grid" id="ngo-inventory">
+                            <div class="empty-state">
+                                <div class="spinner"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">📋 Dispatch History</div>
+                    </div>
+                    <div class="panel-body no-pad" id="ngo-history">
+                        <div class="empty-state">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════
+     PAGE: ADMIN DASHBOARD
+════════════════════════════════ -->
+    <div class="page" id="page-admin" id2="admin-page">
+        <div class="dash-page" id="admin-page">
+            <div class="dash-header">
+                <div class="dash-header-top">
+                    <div>
+                        <div class="dash-title">⚡ ADMIN COMMAND CENTER</div>
+                        <div class="dash-subtitle">Full control over all emergency operations</div>
+                    </div>
+                    <span class="badge badge-active"><span class="live-dot"
+                            style="width:6px;height:6px;background:var(--green)"></span> System Online</span>
+                </div>
+            </div>
+            <div class="dash-body">
+                <!-- Quick Stats -->
+                <div class="stat-cards">
+                    <div class="stat-card">
+                        <div class="stat-card-icon">🆘</div>
+                        <div class="stat-card-num" style="color:var(--red)" id="an-total">—</div>
+                        <div class="stat-card-label">Total Cases</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-icon">⏳</div>
+                        <div class="stat-card-num" style="color:var(--orange)" id="an-pending">—</div>
+                        <div class="stat-card-label">Pending</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-icon">⚡</div>
+                        <div class="stat-card-num" style="color:var(--blue)" id="an-active">—</div>
+                        <div class="stat-card-label">Active</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-icon">✅</div>
+                        <div class="stat-card-num" style="color:var(--green)" id="an-resolved">—</div>
+                        <div class="stat-card-label">Resolved</div>
+                    </div>
+                </div>
+
+                <!-- Tabs -->
+                <div class="tab-bar">
+                    <button class="tab-btn active" data-tab="sos" onclick="switchAdminTab('sos')">🆘 Pending</button>
+                    <button class="tab-btn" data-tab="cases" onclick="switchAdminTab('cases')">📋 All Cases</button>
+                    <button class="tab-btn" data-tab="map" onclick="switchAdminTab('map')">🗺️ Live Map</button>
+                    <button class="tab-btn" data-tab="broadcast" onclick="switchAdminTab('broadcast')">📢
+                        Broadcasts</button>
+                    <button class="tab-btn" data-tab="analytics" onclick="switchAdminTab('analytics')">📊
+                        Analytics</button>
+                    <button class="tab-btn" data-tab="audit" onclick="switchAdminTab('audit')">🔒 Audit Log</button>
+                </div>
+
+                <div class="tab-panel active" id="tab-sos">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div class="panel-title">🔴 Pending SOS</div><button class="btn btn-ghost btn-sm"
+                                onclick="loadAdminPending()">⟳ Refresh</button>
+                        </div>
+                        <div class="panel-body no-pad" id="admin-pending-list">
+                            <div class="empty-state">
+                                <div class="spinner"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-panel" id="tab-cases">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div class="panel-title">📋 All Cases</div><button class="btn btn-ghost btn-sm"
+                                onclick="loadAdminCases()">⟳ Refresh</button>
+                        </div>
+                        <div class="panel-body no-pad" id="admin-cases-list">
+                            <div class="empty-state">
+                                <div class="spinner"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-panel" id="tab-map">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div class="panel-title">🗺️ Live Incident Map</div><span
+                                class="badge badge-active">Real-Time Pins</span>
+                        </div>
+                        <div class="panel-body" style="padding:0">
+                            <div id="admin-map" class="leaflet-map tall"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-panel" id="tab-broadcast">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start">
+                        <div class="panel">
+                            <div class="panel-header">
+                                <div class="panel-title">📢 New Broadcast</div>
+                            </div>
+                            <div class="panel-body">
+                                <div class="form-group"><label>Alert Title *</label><input type="text" id="bc-title"
+                                        placeholder="e.g. FLOOD ALERT — Nagpur Sector 4"></div>
+                                <div class="form-group"><label>Severity</label>
+                                    <select id="bc-severity">
+                                        <option value="info">ℹ️ Info</option>
+                                        <option value="warning">⚠️ Warning</option>
+                                        <option value="critical">🚨 Critical</option>
+                                    </select>
+                                </div>
+                                <div class="form-group"><label>Message *</label><textarea id="bc-message"
+                                        placeholder="Detailed instructions for citizens and responders..."></textarea>
+                                </div>
+                                <button class="btn btn-red" style="width:100%;justify-content:center" id="bc-submit"
+                                    onclick="sendBroadcast()">📢 Send Broadcast</button>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header">
+                                <div class="panel-title">📡 Active Broadcasts</div><button class="btn btn-ghost btn-sm"
+                                    onclick="refreshBroadcasts('broadcast-list-admin')">⟳</button>
+                            </div>
+                            <div class="panel-body" id="broadcast-list-admin">
+                                <div class="empty-state">
+                                    <div class="spinner"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-panel" id="tab-analytics">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px">
+                        <div class="panel">
+                            <div class="panel-header">
+                                <div class="panel-title">📊 Cases by Type</div>
+                            </div>
+                            <div class="panel-body">
+                                <div class="chart-bar-wrap" id="chart-bars">
+                                    <div class="empty-state">
+                                        <div class="spinner"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="panel-header">
+                                <div class="panel-title">🎯 Status Breakdown</div>
+                            </div>
+                            <div class="panel-body" id="status-chart">
+                                <div class="empty-state">
+                                    <div class="spinner"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="metric-grid">
+                        <div class="metric-box">
+                            <div class="metric-box-num" id="an-total2">—</div>
+                            <div class="metric-box-label">Total Incidents</div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-box-num" id="an-responders">—</div>
+                            <div class="metric-box-label">Active Responders</div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-box-num" id="an-saved">—</div>
+                            <div class="metric-box-label">Cases Resolved</div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-box-num" id="an-response">—</div>
+                            <div class="metric-box-label">Avg Response Time</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-panel" id="tab-audit">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div class="panel-title">🔒 Admin Audit Log</div><span
+                                style="font-size:12px;color:var(--grey)">Persisted in localStorage</span>
+                        </div>
+                        <div class="panel-body no-pad" id="audit-list"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════
+     PAGE: DOWNLOAD
+════════════════════════════════ -->
+    <div class="page" id="page-download">
+        <div class="download-hero">
+            <div class="section-label">Get The App</div>
+            <div class="section-title"
+                style="font-family:var(--font-head);font-size:clamp(40px,7vw,80px);color:var(--white)">DOWNLOAD RESQNET
+            </div>
+            <p style="font-size:18px;color:var(--grey);max-width:500px;margin:16px auto 0">Available on Android. iOS
+                coming soon. Free for all users.</p>
+            <div class="platform-cards">
+                <div class="platform-card">
+                    <div class="platform-icon">🤖</div>
+                    <h3>Android APK</h3>
+                    <p>Direct APK download. Works on Android 6.0+. No Play Store needed for demo.</p>
+                    <div class="qr-placeholder">Scan QR<br>or click Download</div><button class="btn btn-red"
+                        style="width:100%;justify-content:center"
+                        onclick="showToast('📦 Upload your Flutter APK to /frontend/resqnet.apk to enable this download')">⬇️
+                        Download APK</button>
+                </div>
+                <div class="platform-card">
+                    <div class="platform-icon">🍎</div>
+                    <h3>iOS (Coming Soon)</h3>
+                    <p>iOS version under development. Register now and we'll notify you on launch.</p>
+                    <div class="qr-placeholder" style="background:var(--bg3);color:var(--grey)">Coming Soon</div><button
+                        class="btn btn-ghost" style="width:100%;justify-content:center"
+                        onclick="showPage('contact')">Notify Me →</button>
+                </div>
+                <div class="platform-card">
+                    <div class="platform-icon">🌐</div>
+                    <h3>Web Admin Panel</h3>
+                    <p>Admins can access the command center from any browser. No app install needed.</p>
+                    <div class="qr-placeholder" style="background:var(--bg3);color:var(--grey)">Web App</div><button
+                        class="btn btn-ghost" style="width:100%;justify-content:center" onclick="showPage('admin')">Open
+                        Admin →</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════
+     PAGE: ABOUT
+════════════════════════════════ -->
+    <div class="page" id="page-about">
+        <div class="about-hero">
+            <div class="section-label">Our Story</div>
+            <div class="section-title"
+                style="font-family:var(--font-head);font-size:clamp(40px,7vw,80px);color:var(--white);margin-bottom:24px">
+                BUILT TO SAVE<br>LIVES IN INDIA</div>
+        </div>
+        <section style="padding-top:0">
+            <div class="about-grid">
+                <div>
+                    <div class="section-label">The Problem</div>
+                    <div class="section-title" style="font-size:clamp(32px,4vw,52px)">COORDINATION<br>FAILS IN CHAOS
+                    </div>
+                    <p style="color:var(--grey);font-size:16px;line-height:1.8;margin-top:16px">During India's worst
+                        disasters — Kerala Floods, Fani Cyclone, Chamoli — the biggest problem wasn't lack of resources.
+                        It was coordination failure. Volunteers didn't know where to go. NGOs didn't know what to send.
+                        Citizens didn't know help was coming.</p>
+                    <p style="color:var(--grey);font-size:16px;line-height:1.8;margin-top:12px">ResQNet was built to
+                        solve exactly this — one platform, four roles, real-time Firestore data.</p>
+                </div>
+                <div class="about-image-placeholder">🌊</div>
+            </div>
+        </section>
+        <div class="divider"></div>
+        <section>
+            <div class="section-header center">
+                <div class="section-label">The Team</div>
+                <div class="section-title">BUILT BY STUDENTS<br>FOR INDIA</div>
+            </div>
+            <div class="team-grid">
+                <div class="team-card">
+                    <div class="team-avatar">R</div>
+                    <h4>Team Lead</h4>
+                    <p>Flutter & Firebase Architecture</p>
+                </div>
+                <div class="team-card">
+                    <div class="team-avatar">A</div>
+                    <h4>Backend Dev</h4>
+                    <p>Node.js, REST APIs, Firestore</p>
+                </div>
+                <div class="team-card">
+                    <div class="team-avatar">S</div>
+                    <h4>UI/UX Designer</h4>
+                    <p>Dashboard & App Design</p>
+                </div>
+                <div class="team-card">
+                    <div class="team-avatar">M</div>
+                    <h4>ML Engineer</h4>
+                    <p>AI Assistant & Analytics</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ════════════════════════════════
+     PAGE: CONTACT
+════════════════════════════════ -->
+    <div class="page" id="page-contact">
+        <div class="contact-hero">
+            <div class="section-label">Get In Touch</div>
+            <div class="section-title"
+                style="font-family:var(--font-head);font-size:clamp(40px,7vw,80px);color:var(--white)">LET'S TALK</div>
+            <div class="contact-grid" style="margin-top:60px">
+                <div class="contact-info">
+                    <p>Whether you're a disaster authority, NGO, or developer — we want to hear from you.</p>
+                    <div class="contact-item">
+                        <div class="contact-item-icon">📧</div>
+                        <div>
+                            <h4>Email</h4>
+                            <p>team@resqnet.in</p>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <div class="contact-item-icon">📍</div>
+                        <div>
+                            <h4>Location</h4>
+                            <p>India — Maharashtra, expanding nationally</p>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <div class="contact-item-icon">⏱️</div>
+                        <div>
+                            <h4>Response Time</h4>
+                            <p>Within 24 hours. Mark "URGENT" for emergencies.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="contact-form">
+                    <h3 style="color:var(--white);font-size:22px;font-weight:700;margin-bottom:24px">Send Us a Message
+                    </h3>
+                    <div class="form-row">
+                        <div class="form-group"><label>First Name</label><input type="text" id="cf-firstname"
+                                placeholder="Rahul"></div>
+                        <div class="form-group"><label>Last Name</label><input type="text" id="cf-lastname"
+                                placeholder="Sharma"></div>
+                    </div>
+                    <div class="form-group"><label>Email</label><input type="email" id="cf-email"
+                            placeholder="rahul@example.com"></div>
+                    <div class="form-group"><label>I am a...</label>
+                        <select id="cf-type">
+                            <option>Select role</option>
+                            <option>Government Authority</option>
+                            <option>NGO</option>
+                            <option>Volunteer</option>
+                            <option>Developer</option>
+                            <option>Media</option>
+                            <option>Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>Subject</label><input type="text" id="cf-subject"
+                            placeholder="Partnership inquiry / Bug report..."></div>
+                    <div class="form-group"><label>Message</label><textarea id="cf-message"
+                            placeholder="Tell us how you'd like to work with ResQNet..."></textarea></div>
+                    <button class="btn btn-red" style="width:100%;justify-content:center;font-size:15px;padding:14px"
+                        id="cf-submit" onclick="handleContactSubmit()">Send Message →</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="footer-top">
+            <div class="footer-brand">
+                <div class="nav-logo" style="margin-bottom:12px">
+                    <div class="nav-logo-icon">🆘</div><span class="nav-logo-text">RESQNET</span>
+                </div>
+                <p>Real-time disaster coordination. Built for India. Built for emergencies.</p>
+            </div>
+            <div class="footer-col">
+                <h4>Platform</h4>
+                <ul>
+                    <li><a onclick="scrollToSection('features')">Features</a></li>
+                    <li><a onclick="scrollToSection('how')">How It Works</a></li>
+                    <li><a onclick="showPage('download')">Download App</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Dashboards</h4>
+                <ul>
+                    <li><a onclick="showPage('citizen')">Citizen</a></li>
+                    <li><a onclick="showPage('volunteer')">Volunteer</a></li>
+                    <li><a onclick="showPage('ngo')">NGO</a></li>
+                    <li><a onclick="showPage('admin')">Admin</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Support</h4>
+                <ul>
+                    <li><a onclick="showPage('contact')">Contact Us</a></li>
+                    <li><a onclick="showPage('login')">Login / Register</a></li>
+                    <li><a onclick="showToast('Privacy Policy — Firebase-secured data')">Privacy Policy</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>© 2024 ResQNet. Built with ❤️ for disaster-prone communities of India.</p>
+            <p style="color:var(--red);font-family:var(--font-mono);font-size:11px">FIREBASE + FLUTTER + NODE.JS</p>
+        </div>
+    </footer>
+
+    <!-- AI CHATBOT -->
+    <button class="chatbot-fab" onclick="toggleChatbot()" title="AI Emergency Assistant">🤖</button>
+    <div class="chatbot-window" id="chatbot-window">
+        <div class="chatbot-header">
+            <div class="chatbot-avatar">🤖</div>
+            <div class="chatbot-head-text">
+                <div class="chatbot-head-title">ResQNet AI Assistant</div>
+                <div class="chatbot-head-sub">24/7 Emergency Guidance</div>
+            </div>
+            <button class="chatbot-close" onclick="toggleChatbot()">✕</button>
+        </div>
+        <div class="chat-messages" id="chat-messages"></div>
+        <div class="chat-quick-row">
+            <button class="chat-quick" onclick="el('chat-input').value='flood emergency';sendChatMessage()">🌊
+                Flood</button>
+            <button class="chat-quick" onclick="el('chat-input').value='fire emergency';sendChatMessage()">🔥
+                Fire</button>
+            <button class="chat-quick" onclick="el('chat-input').value='medical emergency';sendChatMessage()">🏥
+                Medical</button>
+            <button class="chat-quick" onclick="el('chat-input').value='how to send sos';sendChatMessage()">🆘 SOS
+                Help</button>
+        </div>
+        <div class="chat-input-row">
+            <input type="text" id="chat-input" placeholder="Ask about any emergency..."
+                onkeydown="handleChatKey(event)">
+            <button class="chat-send-btn" onclick="sendChatMessage()">➤</button>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <!-- ── Profile Modal ───────────────────────────── -->
+    <div class="modal-overlay" id="profile-modal" onclick="if(event.target===this)closeProfile()">
+        <div class="modal-box">
+            <button class="modal-close" onclick="closeProfile()">✕</button>
+            <div class="profile-info">
+                <div class="profile-avatar-big" id="prof-avatar">R</div>
+                <div class="profile-name" id="prof-name">—</div>
+                <div class="profile-email" id="prof-email">—</div>
+                <div class="profile-role-badge" id="prof-role">—</div>
+            </div>
+            <div class="form-group"><label>Display Name</label><input type="text" id="prof-name-input"
+                    placeholder="Your name"></div>
+            <div class="form-group"><label>Email</label><input type="email" id="prof-email-input"
+                    placeholder="your@email.com"></div>
+            <div class="profile-actions">
+                <button class="btn btn-red" onclick="saveProfile()" style="flex:2">💾 Save Changes</button>
+                <button class="btn btn-ghost" onclick="profileLogout()">Logout</button>
+            </div>
+            <p style="text-align:center;font-size:11px;color:var(--grey2);margin-top:12px">Changes sync to Firebase when
+                connected</p>
+        </div>
+    </div>
+
+    <!-- ── Smart Dispatch Modal ────────────────────── -->
+    <div class="modal-overlay" id="dispatch-modal" onclick="if(event.target===this)closeDispatch()">
+        <div class="modal-box" style="max-width:700px;width:95vw">
+            <button class="modal-close" onclick="closeDispatch()">✕</button>
+            <div style="margin-bottom:24px">
+                <div
+                    style="font-size:11px;color:var(--red);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">
+                    🤖 Smart Dispatch Engine</div>
+                <div style="font-family:var(--font-head);font-size:32px;color:var(--white)">NEAREST VOLUNTEER MATCH
+                </div>
+                <div id="dispatch-incident-info" style="font-size:13px;color:var(--grey);margin-top:4px"></div>
+            </div>
+            <!-- Map showing volunteer → incident routes -->
+            <div id="dispatch-map"
+                style="height:280px;border-radius:12px;overflow:hidden;border:1px solid var(--border);margin-bottom:20px">
+            </div>
+            <!-- Volunteer table -->
+            <div id="dispatch-volunteer-list"></div>
+            <div style="display:flex;gap:10px;margin-top:20px">
+                <button class="btn btn-red" onclick="assignSmartPick()" style="flex:1;justify-content:center">⚡
+                    Auto-Assign Best Match</button>
+                <button class="btn btn-ghost" onclick="closeDispatch()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="firebase-client.js"></script>
+    <script src="app.js"></script>
+
+    <!-- ── Floating DEMO button (visible to judges on all pages) ── -->
+    <button id="demo-fab" onclick="simulateDisaster()" title="Run live disaster simulation for demo" style="position:fixed;bottom:24px;left:24px;z-index:950;
+               background:linear-gradient(135deg,#1B5E20,#4CAF50);
+               border:none;border-radius:50px;padding:12px 22px;
+               color:white;font-weight:700;font-size:13px;cursor:pointer;
+               box-shadow:0 0 0 0 rgba(76,175,80,0.7);
+               animation:demoPulse 2s ease-in-out infinite;
+               display:flex;align-items:center;gap:8px;letter-spacing:0.5px">
+        <span style="font-size:18px">🎮</span> DEMO
+    </button>
+
+</body>
+
+</html>

@@ -1,0 +1,9 @@
+{
+    "name": "resqnet",
+    "version": "1.0.0",
+    "description": "ResQNet — Real-time Disaster Coordination Platform",
+    "scripts": {
+        "start": "node backend/server.js",
+        "dev": "node backend/server.js"
+    }
+}
