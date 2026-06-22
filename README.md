@@ -244,14 +244,6 @@ If you'd like to improve the project:
 
 ---
 
-# 👨‍💻 Author
-
-Developed by **Yashu**
-
-https://github.com/Yash130606/resqnetpro-website
-
----
-
 # 📄 License
 
 This project is licensed under the MIT License.
